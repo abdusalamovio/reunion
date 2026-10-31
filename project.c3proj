@@ -202,7 +202,7 @@
 		"authorEmail": "",
 		"authorWebsite": "",
 		"appId": "",
-		"saveLLMContextFile": true,
+		"saveLLMContextFile": false,
 		"pixelRounding": false,
 		"fov": 0.7853981633974483,
 		"useLoaderLayout": false,
