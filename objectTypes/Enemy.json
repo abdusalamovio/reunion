@@ -1,0 +1,67 @@
+{
+	"name": "Enemy",
+	"plugin-id": "Sprite",
+	"sid": 410882317450061,
+	"isGlobal": false,
+	"editorNewInstanceIsReplica": true,
+	"instanceVariables": [
+		{
+			"name": "health",
+			"type": "number",
+			"desc": "Сколько ударов ключом выдерживает",
+			"show": true,
+			"sid": 410882317450062
+		},
+		{
+			"name": "patrolRange",
+			"type": "number",
+			"desc": "На сколько пикселей уходит от стартовой точки",
+			"show": true,
+			"sid": 410882317450063
+		}
+	],
+	"behaviorTypes": [],
+	"effectTypes": [],
+	"animations": {
+		"items": [
+			{
+				"frames": [
+					{
+						"width": 40,
+						"height": 36,
+						"originX": 0.5,
+						"originY": 1,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4108827,
+						"collisionPoly": {
+							"points": [
+								0.08,
+								0.1,
+								0.92,
+								0.1,
+								0.92,
+								1,
+								0.08,
+								1
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					}
+				],
+				"sid": 410882317450064,
+				"name": "Default",
+				"isLooping": false,
+				"isPingPong": false,
+				"repeatCount": 1,
+				"repeatTo": 0,
+				"speed": 0
+			}
+		],
+		"subfolders": []
+	}
+}
