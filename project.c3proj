@@ -5,10 +5,51 @@
 	"runtime": "c3",
 	"useWorker": "auto",
 	"bundleAddons": false,
-	"usedAddons": [],
+	"usedAddons": [
+		{
+			"type": "plugin",
+			"id": "Sprite",
+			"name": "Sprite",
+			"author": "Scirra",
+			"bundled": false
+		},
+		{
+			"type": "plugin",
+			"id": "Text",
+			"name": "Text",
+			"author": "Scirra",
+			"bundled": false
+		},
+		{
+			"type": "behavior",
+			"id": "Platform",
+			"name": "Platform",
+			"author": "Scirra",
+			"bundled": false
+		},
+		{
+			"type": "behavior",
+			"id": "solid",
+			"name": "Solid",
+			"author": "Scirra",
+			"bundled": false
+		}
+	],
 	"uniqueId": "mqa5ns3kpfb",
 	"objectTypes": {
-		"items": [],
+		"items": [
+			"Olly",
+			"Ground",
+			"Enemy",
+			"Wrench",
+			"HUD",
+			"BgFar",
+			"BgNear",
+			"Fog",
+			"Bolt",
+			"Bracket",
+			"HudPlate"
+		],
 		"subfolders": []
 	},
 	"functionsName": "Функции",
@@ -211,5 +252,5 @@
 	},
 	"viewportWidth": 854,
 	"viewportHeight": 480,
-	"firstLayout": null
+	"firstLayout": "Макет 1"
 }
