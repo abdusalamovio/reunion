@@ -1,3 +1,16 @@
 *.uistate.json
 uistate
 ts-defs
+
+# Генерируется Construct при открытии проекта
+tsconfig.json
+
+# macOS
+.DS_Store
+
+# Локальные настройки Claude Code (общие лежат в .claude/settings.json)
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.pyc
