@@ -73,7 +73,7 @@
 		"script": {
 			"items": [
 				{
-					"name": "основной.ts",
+					"name": "main.ts",
 					"type": "application/typescript",
 					"sid": 771097546328510,
 					"script-info": {
@@ -81,7 +81,7 @@
 					}
 				},
 				{
-					"name": "импортДляСобытий.ts",
+					"name": "importsForEvents.ts",
 					"type": "application/typescript",
 					"sid": 803884160780973,
 					"script-info": {
