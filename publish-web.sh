@@ -18,7 +18,15 @@ downloads=${DOWNLOADS_DIR:-$HOME/Downloads}
 newest_build() {
 	local pattern=$1
 	{
-		find "$downloads" -maxdepth 1 -type f -iname "*${pattern}*.zip"
+		# Только архивы, внутри которых есть index.html. Иначе сюда попадает
+		# архив исходников с GitHub: он тоже называется reunion-*.zip, но
+		# публиковать его нельзя.
+		find "$downloads" -maxdepth 1 -type f -iname "*${pattern}*.zip" |
+			while read -r zip; do
+				if unzip -l "$zip" 2>/dev/null | grep -q 'index\.html'; then
+					echo "$zip"
+				fi
+			done
 		find "$downloads" -mindepth 1 -maxdepth 1 -type d -iname "*${pattern}*" |
 			while read -r dir; do
 				if [ -f "$dir/index.html" ]; then
@@ -39,6 +47,8 @@ if [ -z "$src" ]; then
 	[ -n "$src" ] || src=$(newest_build '' || true)
 	if [ -z "$src" ]; then
 		echo "В $downloads нет ни zip-архива, ни папки со сборкой." >&2
+		echo "Архивы без index.html внутри пропускаются — скачанные с GitHub" >&2
+		echo "исходники проекта сборкой не являются." >&2
 		echo "Сначала экспорт: Menu → Project → Export project → Web (HTML5)." >&2
 		echo "Либо укажите путь: $0 <экспорт.zip | папка со сборкой>" >&2
 		exit 1
@@ -62,7 +72,9 @@ mkdir -p "$build"
 if [ -d "$src" ]; then
 	cp -R "$src"/. "$build"/
 elif [ "${src##*.}" = "zip" ]; then
-	if ! unzip -q "$src" -d "$build"; then
+	# ditto, а не unzip: Info-ZIP на macOS не смотрит на флаг UTF-8 и ломает
+	# кириллицу в именах, а потом врёт про «disk full».
+	if ! ditto -x -k "$src" "$build"; then
 		echo "Не получилось распаковать $src — это точно архив экспорта?" >&2
 		exit 1
 	fi
