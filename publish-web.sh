@@ -2,18 +2,48 @@
 #
 # Публикация веб-сборки в GitHub Pages.
 #
-#   ./publish-web.sh ~/Downloads/Reunion.zip     # zip из Export project → Web (HTML5)
-#   ./publish-web.sh ~/Downloads/Reunion/        # или уже распакованная папка
+#   ./publish-web.sh                             # берёт свежий экспорт из ~/Downloads
+#   ./publish-web.sh путь/к/Reunion.zip          # или архив по явному пути
+#   ./publish-web.sh путь/к/Reunion/             # или уже распакованную папку
 #
 # Сборка уходит в ветку gh-pages и полностью заменяет то, что там было.
 # Исходники проекта скрипт не трогает: он работает в отдельном worktree.
 
 set -euo pipefail
 
+downloads=${DOWNLOADS_DIR:-$HOME/Downloads}
+
+# Свежайший кандидат на сборку в Загрузках: zip-архив или папка с index.html
+# (Safari распаковывает скачанное сам). pattern отбирает по имени.
+newest_build() {
+	local pattern=$1
+	{
+		find "$downloads" -maxdepth 1 -type f -iname "*${pattern}*.zip"
+		find "$downloads" -mindepth 1 -maxdepth 1 -type d -iname "*${pattern}*" |
+			while read -r dir; do
+				if [ -f "$dir/index.html" ]; then
+					echo "$dir"
+				fi
+			done
+	} 2>/dev/null |
+		while read -r path; do
+			printf '%s\t%s\n' "$(stat -f %m "$path")" "$path"
+		done |
+		sort -rn | head -1 | cut -f2-
+}
+
 src=${1:-}
 if [ -z "$src" ]; then
-	echo "Использование: $0 <экспорт.zip | папка со сборкой>" >&2
-	exit 1
+	# Сначала ищем по имени проекта, потом любую сборку.
+	src=$(newest_build reunion || true)
+	[ -n "$src" ] || src=$(newest_build '' || true)
+	if [ -z "$src" ]; then
+		echo "В $downloads нет ни zip-архива, ни папки со сборкой." >&2
+		echo "Сначала экспорт: Menu → Project → Export project → Web (HTML5)." >&2
+		echo "Либо укажите путь: $0 <экспорт.zip | папка со сборкой>" >&2
+		exit 1
+	fi
+	echo "Беру сборку: $src (от $(stat -f '%Sm' -t '%d.%m.%Y %H:%M' "$src"))"
 fi
 
 repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
@@ -32,7 +62,10 @@ mkdir -p "$build"
 if [ -d "$src" ]; then
 	cp -R "$src"/. "$build"/
 elif [ "${src##*.}" = "zip" ]; then
-	unzip -q "$src" -d "$build"
+	if ! unzip -q "$src" -d "$build"; then
+		echo "Не получилось распаковать $src — это точно архив экспорта?" >&2
+		exit 1
+	fi
 else
 	echo "Нужен .zip экспорта или папка со сборкой, а не $src" >&2
 	exit 1
