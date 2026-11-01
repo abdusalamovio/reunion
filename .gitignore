@@ -1,6 +1,3 @@
-*.uistate.json
-uistate
-
 # macOS
 .DS_Store
 
