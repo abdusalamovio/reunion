@@ -78,7 +78,7 @@ Construct project folder (не `.c3p`-архив). Запуск — Preview в �
 
 ```
 project.c3proj          индекс проекта Construct
-scripts/основной.ts     вся игровая логика
+scripts/main.ts         вся игровая логика
 layouts/Макет 1.json    уровень: геометрия, враги, фон, декор
 objectTypes/*.json      описания типов объектов
 images/*.png            спрайты
