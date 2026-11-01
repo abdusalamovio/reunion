@@ -22,10 +22,14 @@ newest_build() {
 		# архив исходников с GitHub: он тоже называется reunion-*.zip, но
 		# публиковать его нельзя.
 		find "$downloads" -maxdepth 1 -type f -iname "*${pattern}*.zip" |
-			while read -r zip; do
-				if unzip -l "$zip" 2>/dev/null | grep -q 'index\.html'; then
-					echo "$zip"
-				fi
+			while read -r candidate; do
+				# Без конвейера: grep -q закрыл бы трубу на первом совпадении,
+				# unzip упал бы с SIGPIPE, а pipefail превратил бы это в
+				# «не найдено». Сначала забираем список целиком, потом ищем.
+				listing=$(unzip -Z1 "$candidate" 2>/dev/null || true)
+				case $listing in
+					*index.html*) echo "$candidate" ;;
+				esac
 			done
 		find "$downloads" -mindepth 1 -maxdepth 1 -type d -iname "*${pattern}*" |
 			while read -r dir; do
