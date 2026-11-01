@@ -1,10 +1,6 @@
 *.uistate.json
 uistate
 
-# Генерируется Construct при открытии проекта
-tsconfig.json
-ts-defs
-
 # macOS
 .DS_Store
 
