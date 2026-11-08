@@ -176,9 +176,7 @@
 		}
 	},
 	"timelines": {
-		"items": [
-			"Шкала 1"
-		],
+		"items": [],
 		"subfolders": [
 			{
 				"items": [],
@@ -187,9 +185,7 @@
 		]
 	},
 	"flowcharts": {
-		"items": [
-			"Блок-схема 1"
-		],
+		"items": [],
 		"subfolders": []
 	},
 	"models3d": {
