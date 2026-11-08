@@ -1,0 +1,208 @@
+{
+	"name": "Cube",
+	"plugin-id": "Sprite",
+	"sid": 410882317490001,
+	"isGlobal": false,
+	"editorNewInstanceIsReplica": true,
+	"instanceVariables": [],
+	"behaviorTypes": [],
+	"effectTypes": [],
+	"animations": {
+		"items": [
+			{
+				"frames": [
+					{
+						"width": 30,
+						"height": 30,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4109272,
+						"collisionPoly": {
+							"points": [
+								0.15,
+								0.15,
+								0.85,
+								0.15,
+								0.85,
+								0.85,
+								0.15,
+								0.85
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					},
+					{
+						"width": 30,
+						"height": 30,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4109273,
+						"collisionPoly": {
+							"points": [
+								0.15,
+								0.15,
+								0.85,
+								0.15,
+								0.85,
+								0.85,
+								0.15,
+								0.85
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					},
+					{
+						"width": 30,
+						"height": 30,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4109274,
+						"collisionPoly": {
+							"points": [
+								0.15,
+								0.15,
+								0.85,
+								0.15,
+								0.85,
+								0.85,
+								0.15,
+								0.85
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					},
+					{
+						"width": 30,
+						"height": 30,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4109275,
+						"collisionPoly": {
+							"points": [
+								0.15,
+								0.15,
+								0.85,
+								0.15,
+								0.85,
+								0.85,
+								0.15,
+								0.85
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					},
+					{
+						"width": 30,
+						"height": 30,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4109276,
+						"collisionPoly": {
+							"points": [
+								0.15,
+								0.15,
+								0.85,
+								0.15,
+								0.85,
+								0.85,
+								0.15,
+								0.85
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					},
+					{
+						"width": 30,
+						"height": 30,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4109277,
+						"collisionPoly": {
+							"points": [
+								0.15,
+								0.15,
+								0.85,
+								0.15,
+								0.85,
+								0.85,
+								0.15,
+								0.85
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					},
+					{
+						"width": 30,
+						"height": 30,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4109278,
+						"collisionPoly": {
+							"points": [
+								0.15,
+								0.15,
+								0.85,
+								0.15,
+								0.85,
+								0.85,
+								0.15,
+								0.85
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					}
+				],
+				"sid": 410882317490214,
+				"name": "Spin",
+				"isLooping": true,
+				"isPingPong": false,
+				"repeatCount": 1,
+				"repeatTo": 0,
+				"speed": 12
+			}
+		],
+		"subfolders": []
+	}
+}
