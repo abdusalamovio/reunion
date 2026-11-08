@@ -14,13 +14,6 @@
 			"bundled": false
 		},
 		{
-			"type": "plugin",
-			"id": "Text",
-			"name": "Text",
-			"author": "Scirra",
-			"bundled": false
-		},
-		{
 			"type": "behavior",
 			"id": "Platform",
 			"name": "Platform",
@@ -33,6 +26,13 @@
 			"name": "Solid",
 			"author": "Scirra",
 			"bundled": false
+		},
+		{
+			"type": "behavior",
+			"id": "jumpthru",
+			"name": "Jump-thru",
+			"author": "Scirra",
+			"bundled": false
 		}
 	],
 	"uniqueId": "mqa5ns3kpfb",
@@ -40,15 +40,17 @@
 		"items": [
 			"Olly",
 			"Ground",
-			"Enemy",
 			"Wrench",
-			"HUD",
-			"BgFar",
-			"BgNear",
-			"Fog",
-			"Bolt",
-			"Bracket",
-			"HudPlate"
+			"Shelf",
+			"Spring",
+			"Part",
+			"Boss",
+			"Cube",
+			"Core",
+			"Mouse",
+			"Bird",
+			"Caterpillar",
+			"Deco"
 		],
 		"subfolders": []
 	},
