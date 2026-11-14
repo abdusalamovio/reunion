@@ -66,7 +66,9 @@
 	},
 	"layouts": {
 		"items": [
-			"Макет 1"
+			"Детская 1",
+			"Детская 2",
+			"Детская 3"
 		],
 		"subfolders": []
 	},
@@ -253,5 +255,5 @@
 	},
 	"viewportWidth": 854,
 	"viewportHeight": 480,
-	"firstLayout": "Макет 1"
+	"firstLayout": "Детская 1"
 }
