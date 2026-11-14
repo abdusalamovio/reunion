@@ -126,6 +126,12 @@ const BOSS_DIE_FRAMES = [0.2, 0.2, 0.2, 0.24];
 const BOSS_IDLE_FPS = 6;
 
 const BOSS_WAKE_DISTANCE = 110;
+// Медведь ходит по опоре, на которой стоит на макете (сцена, полка, пол), но
+// не дальше BOSS_ROAM от места старта. Границы считаются на старте уровня —
+// босса можно перетаскивать в редакторе куда угодно. BOSS_SNAP — насколько
+// ноги могут быть ниже верха опоры (неточно поставили мышкой).
+const BOSS_ROAM = 110;
+const BOSS_SNAP = 8;
 const BOSS_REST = 1.0;
 const BOSS_REST_ENRAGED = 0.55;
 const BOSS_CLAW_RANGE = 60;
@@ -162,11 +168,24 @@ const CORE_BOB_SPEED = 3;
 const SPRING_LAUNCH = 575;
 const SPRING_TOLERANCE = 3;
 
-// Точка возрождения
+// Точка возрождения: там, где Олли стоит на макете при старте уровня.
 
-const OLLY_SPAWN_X = 30;
-const OLLY_SPAWN_Y = 255;
 const FALL_MARGIN = 80;
+
+// Уровни по порядку: у каждого свой макет, переход — у правого края. Имена —
+// как у макетов. Пока собрана только детская: мастерские и двор ждут
+// дизайна. Новые макеты дописывай сюда (и в LEVELS в
+// .claude/design/build_locations.py).
+const LEVELS: ReadonlyArray<string> = [
+	"Детская 1", "Детская 2", "Детская 3",
+];
+
+// Выход в следующий уровень — стимпанк-портал в конце макета: Олли входит в
+// арку, и загружается следующий. Пока на уровне жив босс, портал заперт и
+// полупрозрачен. Нет портала — выход у правого края, как раньше.
+const EXIT_MARGIN = 14;   // стена — сразу за краем: полхитбокса Олли 9 + запас
+const PORTAL_LOCKED_OPACITY = 0.35;
+const PORTAL_INNER = 0.3; // проём арки — доля ширины портала от центра в каждую сторону
 
 // Состояние
 
@@ -231,6 +250,8 @@ let bossPhase: BossPhase = "sleep";
 let bossTime = 0;
 let bossFacing: 1 | -1 = -1;
 let bossFloorY = 0;
+let bossArenaLeft = 0;
+let bossArenaRight = 0;
 let bossNextAttack: BossAttack = "leap";
 let bossRangedToggle = false;
 let bossVX = 0;
@@ -251,6 +272,12 @@ const cubeStates = new Map<number, CubeState>();
 let core: InstanceType.Core | null = null;
 let coreBaseY = 0;
 
+// Уровень и арена
+let spawnX = 0;
+let spawnY = 0;
+let leavingLevel = false;
+let portal: InstanceType.Portal | null = null;     // goToLayout вызван, новый макет ещё не начался
+
 // Запуск
 
 // Точка входа Construct: ждём, пока загрузится макет.
@@ -259,18 +286,14 @@ runOnStartup(async (rt: IRuntime) =>
 	rt.addEventListener("beforeprojectstart", () => OnBeforeProjectStart(rt));
 });
 
-// Находит Олли, врагов и босса, включает зум камеры и подписывается на ввод и кадр.
+// Подписывается на ввод и кадр (один раз на всю игру) и запускает первый уровень.
 function OnBeforeProjectStart(rt: IRuntime): void
 {
 	runtime = rt;
 
-	olly = RequireFirstInstance(runtime.objects.Olly, "Olly");
-
-	CollectEnemyStates();
-	CollectBoss();
-
-	runtime.layout.scale = CAMERA_ZOOM;
-	SnapCameraToOlly();
+	StartLevel();
+	// Каждый следующий макет-уровень начинается заново: свой Олли, враги, арена.
+	runtime.addEventListener("beforeanylayoutstart", () => StartLevel());
 
 	runtime.addEventListener("keydown", (e: KeyboardEvent) => heldKeys.add(e.code));
 	runtime.addEventListener("keyup", (e: KeyboardEvent) => heldKeys.delete(e.code));
@@ -280,6 +303,45 @@ function OnBeforeProjectStart(rt: IRuntime): void
 	runtime.addEventListener("suspend", () => heldKeys.clear());
 
 	runtime.addEventListener("tick", () => Tick());
+}
+
+// Находит Олли, врагов, босса и ворота арены на текущем макете и сбрасывает
+// всё, что осталось от прошлого уровня. Вызывается на старте каждого макета.
+function StartLevel(): void
+{
+	olly = RequireFirstInstance(runtime.objects.Olly, "Olly");
+	spawnX = olly.x;
+	spawnY = olly.y;
+
+	enemyStates.clear();
+	partStates.clear();
+	cubeStates.clear();
+	swingHitUids.clear();
+	swing = null;
+	swingCooldownLeft = swingLifeLeft = swingWindupLeft = 0;
+	oneShot = null;
+	contactCooldownLeft = 0;
+	facing = 1;
+
+	boss = null;
+	bossPhase = "sleep";
+	bossTime = 0;
+	bossFacing = -1;
+	bossNextAttack = "leap";
+	bossRangedToggle = false;
+	bossVX = bossVY = 0;
+	bossAirborne = false;
+	bossStruck = false;
+	core = null;
+
+	leavingLevel = false;
+	portal = runtime.objects.Portal.getFirstInstance();
+
+	CollectEnemyStates();
+	CollectBoss();
+
+	runtime.layout.scale = CAMERA_ZOOM;
+	SnapCameraToOlly();
 }
 
 // Первый экземпляр типа; если его нет на макете — ошибка.
@@ -302,7 +364,20 @@ function CollectBoss(): void
 	if (!boss)
 		return;
 
-	bossFloorY = boss.y;
+	// Опора под ногами: на неё ставим и по ней водим.
+	const support = SupportBelow(boss.x, boss.y - BOSS_SNAP);
+	bossFloorY = support ? support.y : boss.y;
+	boss.y = bossFloorY;
+
+	const half = boss.width / 2;
+	const left = support ? support.x + half : -Infinity;
+	const right = support ? support.x + support.width - half : Infinity;
+	bossArenaLeft = Math.max(left, boss.x - BOSS_ROAM);
+	bossArenaRight = Math.min(right, boss.x + BOSS_ROAM);
+
+	if (bossArenaLeft > bossArenaRight)
+		bossArenaLeft = bossArenaRight = boss.x;
+
 	bossMaxHealth = boss.instVars.health;
 	SetBossFrame("Idle", 0);
 }
@@ -332,6 +407,9 @@ function CollectEnemyStates(): void
 // Каждый кадр: Олли, враги, босс, детали, анимация, камера — в этом порядке.
 function Tick(): void
 {
+	if (leavingLevel)
+		return;
+
 	const dt = runtime.dt;
 
 	UpdateMovement();
@@ -347,6 +425,7 @@ function Tick(): void
 	UpdateAnimation(dt);
 	CheckFellOutOfLevel();
 	UpdateCamera();
+	CheckLevelExit();
 }
 
 // Движение Олли
@@ -788,15 +867,23 @@ function SetEnemyAnimation(state: EnemyState, from: "beginning" | "current-frame
 // Верх ближайшей опоры под точкой.
 function FloorBelow(x: number, y: number): number
 {
+	const support = SupportBelow(x, y);
+	return support ? support.y : runtime.layout.height;
+}
+
+// Ближайшая опора (Ground или Shelf) под точкой: её верх не выше y.
+function SupportBelow(x: number, y: number): IWorldInstance | null
+{
 	const supports: ReadonlyArray<IObjectType<IWorldInstance>> =
 		[runtime.objects.Ground, runtime.objects.Shelf];
-	let best = runtime.layout.height;
+	let best: IWorldInstance | null = null;
 
 	// У Ground и Shelf точка привязки — левый верхний угол.
 	for (const objectType of supports)
 		for (const support of objectType.instances())
-			if (x >= support.x && x <= support.x + support.width && support.y >= y && support.y < best)
-				best = support.y;
+			if (x >= support.x && x <= support.x + support.width && support.y >= y
+				&& (!best || support.y < best.y))
+				best = support;
 
 	return best;
 }
@@ -862,7 +949,7 @@ function UpdateBoss(dt: number): void
 		case "dead": UpdateBossDead(); break;
 	}
 
-	boss.x = Clamp(boss.x, boss.instVars.arenaLeft, boss.instVars.arenaRight);
+	boss.x = Clamp(boss.x, bossArenaLeft, bossArenaRight);
 
 	// Тело ранит только в атаке: на отдыхе и замахе к медведю можно подойти
 	// и бить. Раньше касание отбрасывало Олли всегда, а ключ доставал лишь из
@@ -945,7 +1032,7 @@ function UpdateBossSleep(): void
 
 	SetBossFrame("Idle", Math.floor(bossTime * BOSS_IDLE_FPS) % 6);
 
-	if (olly.x > boss.instVars.arenaLeft - BOSS_WAKE_DISTANCE)
+	if (olly.x > bossArenaLeft - BOSS_WAKE_DISTANCE && olly.x < bossArenaRight + BOSS_WAKE_DISTANCE)
 	{
 		FaceOlly();
 		SetBossPhase("wake");
@@ -1020,7 +1107,7 @@ function UpdateBossLeap(dt: number): void
 		if (bossTime < BOSS_CROUCH)
 			return;
 
-		const target = Clamp(olly.x, boss.instVars.arenaLeft, boss.instVars.arenaRight);
+		const target = Clamp(olly.x, bossArenaLeft, bossArenaRight);
 		const airTime = 2 * BOSS_JUMP_SPEED / BOSS_GRAVITY;
 		bossVX = (target - boss.x) / airTime;
 		bossVY = -BOSS_JUMP_SPEED;
@@ -1356,7 +1443,6 @@ function GetCameraTarget(): [number, number]
 
 	const x = olly.x + olly.behaviors.Platform.vectorX * CAMERA_LOOK_AHEAD;
 	const y = olly.y - visibleHeight * CAMERA_HEIGHT_BIAS;
-
 	return [
 		Clamp(x, halfWidth, layout.width - halfWidth),
 		Clamp(y, halfHeight, layout.height - halfHeight),
@@ -1369,11 +1455,42 @@ function CheckFellOutOfLevel(): void
 	if (olly.y < runtime.layout.height + FALL_MARGIN)
 		return;
 
-	olly.x = OLLY_SPAWN_X;
-	olly.y = OLLY_SPAWN_Y;
+	olly.x = spawnX;
+	olly.y = spawnY;
 	olly.behaviors.Platform.setVector(0, 0);
 
 	SnapCameraToOlly();
+}
+
+// Олли вошёл в портал (или, если портала нет, дошёл до правого края) —
+// следующий уровень. Если на уровне есть босс — только когда он побеждён.
+function CheckLevelExit(): void
+{
+	const open = !boss || bossPhase === "dead";
+
+	if (portal)
+		portal.opacity = open ? 1 : PORTAL_LOCKED_OPACITY;
+
+	if (!open)
+		return;
+
+	if (portal)
+	{
+		const half = portal.width * PORTAL_INNER;
+
+		if (!OllyInBox(portal.x - half, portal.y - portal.height, portal.x + half, portal.y))
+			return;
+	}
+	else if (olly.x < runtime.layout.width - EXIT_MARGIN)
+		return;
+
+	const next = LEVELS.indexOf(runtime.layout.name) + 1;
+
+	if (next <= 0 || next >= LEVELS.length)
+		return;
+
+	leavingLevel = true;
+	runtime.goToLayout(LEVELS[next]);
 }
 
 // Утилиты
