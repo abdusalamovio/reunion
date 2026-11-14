@@ -10,6 +10,11 @@
 			"behaviorId": "jumpthru",
 			"name": "JumpThru",
 			"sid": 410882317450201
+		},
+		{
+			"behaviorId": "solid",
+			"name": "Solid",
+			"sid": 410882317450210
 		}
 	],
 	"effectTypes": [],
@@ -18,8 +23,8 @@
 			{
 				"frames": [
 					{
-						"width": 368,
-						"height": 80,
+						"width": 448,
+						"height": 64,
 						"originX": 0,
 						"originY": 0,
 						"originalSource": "",
@@ -46,6 +51,80 @@
 				],
 				"sid": 410882317450202,
 				"name": "Default",
+				"isLooping": false,
+				"isPingPong": false,
+				"repeatCount": 1,
+				"repeatTo": 0,
+				"speed": 0
+			},
+			{
+				"frames": [
+					{
+						"width": 448,
+						"height": 64,
+						"originX": 0,
+						"originY": 0,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4109056,
+						"collisionPoly": {
+							"points": [
+								0,
+								0,
+								1,
+								0,
+								1,
+								0.75,
+								0,
+								0.75
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					}
+				],
+				"sid": 410882317450301,
+				"name": "ShelfM",
+				"isLooping": false,
+				"isPingPong": false,
+				"repeatCount": 1,
+				"repeatTo": 0,
+				"speed": 0
+			},
+			{
+				"frames": [
+					{
+						"width": 704,
+						"height": 64,
+						"originX": 0,
+						"originY": 0,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 4109057,
+						"collisionPoly": {
+							"points": [
+								0,
+								0,
+								1,
+								0,
+								1,
+								0.75,
+								0,
+								0.75
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					}
+				],
+				"sid": 410882317450302,
+				"name": "ShelfL",
 				"isLooping": false,
 				"isPingPong": false,
 				"repeatCount": 1,
