@@ -53,6 +53,7 @@ interface IObjectType<T = IInstance>
 
 interface ILayout
 {
+	readonly name: string;
 	width: number;
 	height: number;
 	scrollX: number;
@@ -75,6 +76,7 @@ interface IRuntime
 	readonly collisions: ICollisionEngine;
 	readonly objects: IProjectObjects;
 	getViewportSize(): [number, number];
+	goToLayout(layoutNameOrIndex: string | number): void;
 	addEventListener(name: string, callback: (e?: any) => void): void;
 }
 
@@ -91,7 +93,10 @@ interface IProjectObjects
 	readonly Cube: IObjectType<InstanceType.Cube>;
 	readonly Core: IObjectType<InstanceType.Core>;
 	readonly Deco: IObjectType<InstanceType.Deco>;
+	readonly Backdrop: IObjectType<InstanceType.Backdrop>;
 	readonly Ground: IObjectType<InstanceType.Ground>;
+	readonly Wall: IObjectType<InstanceType.Wall>;
+	readonly Portal: IObjectType<InstanceType.Portal>;
 	readonly Shelf: IObjectType<InstanceType.Shelf>;
 	readonly Spring: IObjectType<InstanceType.Spring>;
 }
@@ -109,7 +114,7 @@ declare namespace InstanceType
 	type Caterpillar = Mouse;
 
 	type Boss = ISpriteInstance & {
-		instVars: { health: number; arenaLeft: number; arenaRight: number };
+		instVars: { health: number };
 	};
 
 	type Wrench = ISpriteInstance;
@@ -117,7 +122,10 @@ declare namespace InstanceType
 	type Cube = ISpriteInstance;
 	type Core = ISpriteInstance;
 	type Deco = ISpriteInstance;
+	type Backdrop = ISpriteInstance;
 	type Ground = ISpriteInstance;
+	type Wall = ISpriteInstance;
+	type Portal = ISpriteInstance;
 	type Shelf = ISpriteInstance;
 	type Spring = ISpriteInstance;
 }
