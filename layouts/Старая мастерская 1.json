@@ -1443,7 +1443,7 @@
 					"type": "Portal",
 					"properties": {
 						"initially-visible": true,
-						"initial-animation": "Default",
+						"initial-animation": "Closed",
 						"initial-frame": 0,
 						"enable-collisions": false,
 						"live-preview": false
@@ -1459,8 +1459,8 @@
 					"world": {
 						"x": 1634.3,
 						"y": 101.9,
-						"width": 27.3,
-						"height": 47.1,
+						"width": 60.0,
+						"height": 48,
 						"originX": 0.5,
 						"originY": 1,
 						"color": [
