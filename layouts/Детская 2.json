@@ -625,7 +625,7 @@
 					"type": "Portal",
 					"properties": {
 						"initially-visible": true,
-						"initial-animation": "Default",
+						"initial-animation": "Closed",
 						"initial-frame": 0,
 						"enable-collisions": false,
 						"live-preview": false
@@ -639,10 +639,10 @@
 					"showing": true,
 					"locked": false,
 					"world": {
-						"x": 1890.62646484375,
+						"x": 1875.2083333333333,
 						"y": 226.43218994140625,
-						"width": 56,
-						"height": 84,
+						"width": 107.5,
+						"height": 86,
 						"originX": 0.5,
 						"originY": 1,
 						"color": [
@@ -708,7 +708,7 @@
 					"type": "Spring",
 					"properties": {
 						"initially-visible": true,
-						"initial-animation": "Default",
+						"initial-animation": "Nursery",
 						"initial-frame": 0,
 						"enable-collisions": true,
 						"live-preview": false
@@ -1036,7 +1036,7 @@
 					"type": "Spring",
 					"properties": {
 						"initially-visible": true,
-						"initial-animation": "Default",
+						"initial-animation": "Nursery",
 						"initial-frame": 0,
 						"enable-collisions": true,
 						"live-preview": false
@@ -1788,7 +1788,7 @@
 					"type": "Spring",
 					"properties": {
 						"initially-visible": true,
-						"initial-animation": "Default",
+						"initial-animation": "Nursery",
 						"initial-frame": 0,
 						"enable-collisions": true,
 						"live-preview": false
@@ -2068,7 +2068,7 @@
 					"type": "Spring",
 					"properties": {
 						"initially-visible": true,
-						"initial-animation": "Default",
+						"initial-animation": "Nursery",
 						"initial-frame": 0,
 						"enable-collisions": true,
 						"live-preview": false

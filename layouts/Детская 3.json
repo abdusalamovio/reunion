@@ -449,7 +449,7 @@
 					"type": "Portal",
 					"properties": {
 						"initially-visible": true,
-						"initial-animation": "Default",
+						"initial-animation": "Closed",
 						"initial-frame": 0,
 						"enable-collisions": false,
 						"live-preview": false
@@ -463,10 +463,10 @@
 					"showing": true,
 					"locked": false,
 					"world": {
-						"x": 1248.1085205078125,
+						"x": 1235.2083333333333,
 						"y": 225.02284240722656,
-						"width": 56,
-						"height": 84,
+						"width": 107.5,
+						"height": 86,
 						"originX": 0.5,
 						"originY": 1,
 						"color": [
@@ -650,7 +650,7 @@
 					"type": "Spring",
 					"properties": {
 						"initially-visible": true,
-						"initial-animation": "Default",
+						"initial-animation": "Nursery",
 						"initial-frame": 0,
 						"enable-collisions": true,
 						"live-preview": false
