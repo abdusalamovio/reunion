@@ -93,7 +93,6 @@ interface IProjectObjects
 	readonly Cube: IObjectType<InstanceType.Cube>;
 	readonly Core: IObjectType<InstanceType.Core>;
 	readonly Deco: IObjectType<InstanceType.Deco>;
-	readonly Backdrop: IObjectType<InstanceType.Backdrop>;
 	readonly Ground: IObjectType<InstanceType.Ground>;
 	readonly Wall: IObjectType<InstanceType.Wall>;
 	readonly Portal: IObjectType<InstanceType.Portal>;
@@ -122,7 +121,6 @@ declare namespace InstanceType
 	type Cube = ISpriteInstance;
 	type Core = ISpriteInstance;
 	type Deco = ISpriteInstance;
-	type Backdrop = ISpriteInstance;
 	type Ground = ISpriteInstance;
 	type Wall = ISpriteInstance;
 	type Portal = ISpriteInstance;
