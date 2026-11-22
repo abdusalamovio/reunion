@@ -4,12 +4,16 @@ const GAME_LAYER = "Игра";
 // Ввод
 const KEY_LEFT = "KeyA";
 const KEY_RIGHT = "KeyD";
+const KEY_UP = "KeyW"; // по лестнице вверх
+const KEY_DOWN = "KeyS"; // по лестнице вниз
 const KEY_JUMP = "Space";
 const MOUSE_LEFT_BUTTON = 0;
 // Камера
 const CAMERA_SMOOTHING = 7;
 const CAMERA_LOOK_AHEAD = 0.22;
 const CAMERA_HEIGHT_BIAS = 0.12;
+// Наименьшее увеличение. Этажи второй локации ниже кадра (макет 170–203 px, а
+// камера видит 240), их StartLevel увеличивает так, чтобы этаж занял кадр.
 const CAMERA_ZOOM = 2;
 // Олли
 // Кадры крупнее хитбокса, поэтому размер Олли берём отсюда, а не из olly.width/height.
@@ -85,6 +89,12 @@ const BOSS_HURT_FRAMES = [0.12, 0.2];
 const BOSS_DIE_FRAMES = [0.2, 0.2, 0.2, 0.24];
 const BOSS_IDLE_FPS = 6;
 const BOSS_WAKE_DISTANCE = 110;
+// Медведь ходит по опоре, на которой стоит на макете (сцена, полка, пол), но
+// не дальше BOSS_ROAM от места старта. Границы считаются на старте уровня —
+// босса можно перетаскивать в редакторе куда угодно. BOSS_SNAP — насколько
+// ноги могут быть ниже верха опоры (неточно поставили мышкой).
+const BOSS_ROAM = 110;
+const BOSS_SNAP = 8;
 const BOSS_REST = 1.0;
 const BOSS_REST_ENRAGED = 0.55;
 const BOSS_CLAW_RANGE = 60;
@@ -114,14 +124,33 @@ const CORE_BOB_SPEED = 3;
 // Пружины
 const SPRING_LAUNCH = 575;
 const SPRING_TOLERANCE = 3;
-// Точка возрождения
-const OLLY_SPAWN_X = 30;
-const OLLY_SPAWN_Y = 255;
+// Лестницы: W — вверх, S — вниз, прыжок — спрыгнуть.
+const LADDER_SPEED = 80;
+const LADDER_HOP = 190; // подскок на верху, чтобы встать на край опоры
+const LADDER_TOP_REACH = 4; // насколько ступни могут быть выше лестницы
+// Точка возрождения: там, где Олли стоит на макете при старте уровня.
 const FALL_MARGIN = 80;
+// Уровни по порядку: у каждого свой макет, имена — как у макетов. Собраны
+// детская и старая мастерская; новая мастерская и двор ждут дизайна.
+// Новые макеты дописывай сюда.
+const LEVELS = [
+    "Детская 1", "Детская 2", "Детская 3",
+    "Старая мастерская 1", "Старая мастерская 2", "Старая мастерская 3",
+];
+// Выход в следующий уровень — стимпанк-портал в конце макета: Олли входит в
+// арку, и загружается следующий. Портал разгорается, когда Олли рядом; пока на
+// уровне жив босс, заперт и не горит. Нет портала — выход у правого края, как раньше.
+const EXIT_MARGIN = 14; // стена — сразу за краем: полхитбокса Олли 9 + запас
+const PORTAL_WAKE = 150; // с какого расстояния по X разгорается
+const PORTAL_OPENING_TIME = 5 / 12;
+const PORTAL_CLOSING_TIME = 4 / 12;
+const PORTAL_INNER = 0.17; // проём арки — доля ширины портала от центра в каждую сторону
 // Состояние
 let runtime;
 let olly;
 const heldKeys = new Set();
+let climbing = false;
+let ollyGravity = 0; // тяжесть Olly с макета: на лестнице она выключается
 let facing = 1;
 let swing = null;
 let swingCooldownLeft = 0;
@@ -137,6 +166,8 @@ let bossPhase = "sleep";
 let bossTime = 0;
 let bossFacing = -1;
 let bossFloorY = 0;
+let bossArenaLeft = 0;
+let bossArenaRight = 0;
 let bossNextAttack = "leap";
 let bossRangedToggle = false;
 let bossVX = 0;
@@ -147,25 +178,67 @@ let bossMaxHealth = 1;
 const cubeStates = new Map();
 let core = null;
 let coreBaseY = 0;
+// Уровень и арена
+let spawnX = 0;
+let spawnY = 0;
+let leavingLevel = false; // goToLayout вызван, новый макет ещё не начался
+let portal = null;
+let portalPhase = "Closed";
+let portalTimeLeft = 0;
 // Запуск
 // Точка входа Construct: ждём, пока загрузится макет.
 runOnStartup(async (rt) => {
     rt.addEventListener("beforeprojectstart", () => OnBeforeProjectStart(rt));
 });
-// Находит Олли, врагов и босса, включает зум камеры и подписывается на ввод и кадр.
+// Подписывается на ввод и кадр (один раз на всю игру) и запускает первый уровень.
 function OnBeforeProjectStart(rt) {
     runtime = rt;
-    olly = RequireFirstInstance(runtime.objects.Olly, "Olly");
-    CollectEnemyStates();
-    CollectBoss();
-    runtime.layout.scale = CAMERA_ZOOM;
-    SnapCameraToOlly();
+    StartLevel();
+    // Каждый следующий макет-уровень начинается заново: свой Олли, враги, арена.
+    runtime.addEventListener("beforeanylayoutstart", () => StartLevel());
     runtime.addEventListener("keydown", (e) => heldKeys.add(e.code));
     runtime.addEventListener("keyup", (e) => heldKeys.delete(e.code));
     runtime.addEventListener("mousedown", (e) => OnMouseDown(e));
     // Без фокуса keyup не придёт, и клавиша залипнет.
     runtime.addEventListener("suspend", () => heldKeys.clear());
     runtime.addEventListener("tick", () => Tick());
+}
+// Находит Олли, врагов, босса и ворота арены на текущем макете и сбрасывает
+// всё, что осталось от прошлого уровня. Вызывается на старте каждого макета.
+function StartLevel() {
+    olly = RequireFirstInstance(runtime.objects.Olly, "Olly");
+    spawnX = olly.x;
+    spawnY = olly.y;
+    enemyStates.clear();
+    partStates.clear();
+    cubeStates.clear();
+    swingHitUids.clear();
+    swing = null;
+    swingCooldownLeft = swingLifeLeft = swingWindupLeft = 0;
+    oneShot = null;
+    contactCooldownLeft = 0;
+    facing = 1;
+    boss = null;
+    bossPhase = "sleep";
+    bossTime = 0;
+    bossFacing = -1;
+    bossNextAttack = "leap";
+    bossRangedToggle = false;
+    bossVX = bossVY = 0;
+    bossAirborne = false;
+    bossStruck = false;
+    core = null;
+    leavingLevel = false;
+    portal = runtime.objects.Portal.getFirstInstance();
+    portalPhase = "Closed";
+    portalTimeLeft = 0;
+    CollectEnemyStates();
+    CollectBoss();
+    ollyGravity = olly.behaviors.Platform.gravity;
+    climbing = false;
+    const viewportHeight = runtime.getViewportSize()[1];
+    runtime.layout.scale = Math.max(CAMERA_ZOOM, viewportHeight / runtime.layout.height);
+    SnapCameraToOlly();
 }
 // Первый экземпляр типа; если его нет на макете — ошибка.
 function RequireFirstInstance(objectType, name) {
@@ -179,7 +252,17 @@ function CollectBoss() {
     boss = runtime.objects.Boss.getFirstInstance();
     if (!boss)
         return;
-    bossFloorY = boss.y;
+    // Опора под ногами: на неё ставим и по ней водим.
+    const support = SupportBelow(boss.x, boss.y - BOSS_SNAP);
+    bossFloorY = support ? support.y : boss.y;
+    boss.y = bossFloorY;
+    const half = boss.width / 2;
+    const left = support ? support.x + half : -Infinity;
+    const right = support ? support.x + support.width - half : Infinity;
+    bossArenaLeft = Math.max(left, boss.x - BOSS_ROAM);
+    bossArenaRight = Math.min(right, boss.x + BOSS_ROAM);
+    if (bossArenaLeft > bossArenaRight)
+        bossArenaLeft = bossArenaRight = boss.x;
     bossMaxHealth = boss.instVars.health;
     SetBossFrame("Idle", 0);
 }
@@ -203,8 +286,11 @@ function CollectEnemyStates() {
 // Кадр
 // Каждый кадр: Олли, враги, босс, детали, анимация, камера — в этом порядке.
 function Tick() {
+    if (leavingLevel)
+        return;
     const dt = runtime.dt;
     UpdateMovement();
+    UpdateLadders();
     UpdateSprings();
     UpdateFacing();
     UpdateSwing(dt);
@@ -217,6 +303,7 @@ function Tick() {
     UpdateAnimation(dt);
     CheckFellOutOfLevel();
     UpdateCamera();
+    CheckLevelExit();
 }
 // Движение Олли
 // Передаёт зажатые A/D/пробел в поведение Platform.
@@ -236,6 +323,55 @@ function UpdateFacing() {
         facing = 1;
     else if (vectorX < -1)
         facing = -1;
+}
+// Лестницы
+// W у лестницы — Олли лезет вверх, S — вниз. Пока лезет, тяжести нет.
+function UpdateLadders() {
+    const platform = olly.behaviors.Platform;
+    const up = heldKeys.has(KEY_UP);
+    const down = heldKeys.has(KEY_DOWN);
+    const ladder = LadderAtOlly();
+    if (!ladder) {
+        // Долез до верха — подскок, чтобы шагнуть на опору рядом.
+        if (climbing)
+            StopClimbing(up ? -LADDER_HOP : 0);
+        return;
+    }
+    if (climbing && heldKeys.has(KEY_JUMP)) {
+        StopClimbing(-LADDER_HOP);
+        return;
+    }
+    // На полу S не хватается за лестницу: лезть вниз некуда.
+    if (!climbing && (up || (down && !platform.isOnFloor)) && !heldKeys.has(KEY_JUMP)) {
+        climbing = true;
+        platform.gravity = 0;
+    }
+    if (!climbing)
+        return;
+    const direction = (down ? 1 : 0) - (up ? 1 : 0);
+    // Спустился на пол — дальше идёт пешком.
+    if (direction > 0 && platform.isOnFloor) {
+        StopClimbing(0);
+        return;
+    }
+    platform.setVector(platform.vectorX, direction * LADDER_SPEED);
+}
+// Отпускает лестницу: тяжесть возвращается, вертикальная скорость — vectorY.
+function StopClimbing(vectorY) {
+    const platform = olly.behaviors.Platform;
+    climbing = false;
+    platform.gravity = ollyGravity;
+    platform.setVector(platform.vectorX, vectorY);
+}
+// Лестница, у которой стоит Олли. Опора лестницы — центр.
+function LadderAtOlly() {
+    for (const ladder of runtime.objects.Ladder.instances()) {
+        const top = ladder.y - ladder.height / 2 - LADDER_TOP_REACH;
+        const bottom = ladder.y + ladder.height / 2 + OLLY_HITBOX_HEIGHT / 2;
+        if (Math.abs(olly.x - ladder.x) <= ladder.width / 2 && olly.y >= top && olly.y <= bottom)
+            return ladder;
+    }
+    return null;
 }
 // Пружины
 // Олли стоит на пружине — подбрасывает его вверх.
@@ -523,13 +659,34 @@ function SetEnemyAnimation(state, from) {
 }
 // Верх ближайшей опоры под точкой.
 function FloorBelow(x, y) {
-    const supports = [runtime.objects.Ground, runtime.objects.Shelf];
-    let best = runtime.layout.height;
-    // У Ground и Shelf точка привязки — левый верхний угол.
-    for (const objectType of supports)
+    const support = SupportBelow(x, y);
+    return support ? support.y : runtime.layout.height;
+}
+// Ближайшая опора под точкой: её верх не выше y. Ищет по полу (Ground, Shelf)
+// и по платформам и тумбам макетов.
+function SupportBelow(x, y) {
+    const objects = runtime.objects;
+    // Доля кадра над верхней гранью рамки столкновений: у первых платформ над
+    // картинкой прозрачный запас, у остальных рамка — весь кадр.
+    const supports = [
+        [objects.NurseryPlatformM, 0.25], [objects.NurseryPlatformS, 0.32],
+        [objects.NurseryPlatformL, 0.25], [objects.WorkshopPlatformM, 0], [objects.WorkshopPlatformL, 0],
+        [objects.WorkshopPlatformGear, 0], [objects.WorkshopPlatformS, 0],
+        [objects.NurseryPedestal, 0.07], [objects.WorkshopPedestal, 0], [objects.WorkshopBracket, 0],
+        [objects.NurseryColumn, 0.05], [objects.WorkshopColumn, 0],
+    ];
+    let best = null;
+    const consider = (left, top, width) => {
+        if (x >= left && x <= left + width && top >= y && (!best || top < best.y))
+            best = { x: left, y: top, width };
+    };
+    // У Ground и Shelf точка привязки — левый верхний угол, у остальных — центр.
+    for (const objectType of [objects.Ground, objects.Shelf])
         for (const support of objectType.instances())
-            if (x >= support.x && x <= support.x + support.width && support.y >= y && support.y < best)
-                best = support.y;
+            consider(support.x, support.y, support.width);
+    for (const [objectType, topShare] of supports)
+        for (const support of objectType.instances())
+            consider(support.x - support.width / 2, support.y + support.height * (topShare - 0.5), support.width);
     return best;
 }
 // Касание врага ранит Олли.
@@ -593,7 +750,7 @@ function UpdateBoss(dt) {
             UpdateBossDead();
             break;
     }
-    boss.x = Clamp(boss.x, boss.instVars.arenaLeft, boss.instVars.arenaRight);
+    boss.x = Clamp(boss.x, bossArenaLeft, bossArenaRight);
     // Тело ранит только в атаке: на отдыхе и замахе к медведю можно подойти
     // и бить. Раньше касание отбрасывало Олли всегда, а ключ доставал лишь из
     // полоски в 14 px между «далеко» и «коснулся».
@@ -649,7 +806,7 @@ function UpdateBossSleep() {
     if (!boss)
         return;
     SetBossFrame("Idle", Math.floor(bossTime * BOSS_IDLE_FPS) % 6);
-    if (olly.x > boss.instVars.arenaLeft - BOSS_WAKE_DISTANCE) {
+    if (olly.x > bossArenaLeft - BOSS_WAKE_DISTANCE && olly.x < bossArenaRight + BOSS_WAKE_DISTANCE) {
         FaceOlly();
         SetBossPhase("wake");
     }
@@ -699,7 +856,7 @@ function UpdateBossLeap(dt) {
         SetBossFrame("Attack2", 0);
         if (bossTime < BOSS_CROUCH)
             return;
-        const target = Clamp(olly.x, boss.instVars.arenaLeft, boss.instVars.arenaRight);
+        const target = Clamp(olly.x, bossArenaLeft, bossArenaRight);
         const airTime = 2 * BOSS_JUMP_SPEED / BOSS_GRAVITY;
         bossVX = (target - boss.x) / airTime;
         bossVY = -BOSS_JUMP_SPEED;
@@ -878,6 +1035,8 @@ function UpdateAnimation(dt) {
     }
     if (oneShot)
         name = oneShot.name;
+    else if (climbing)
+        name = Math.abs(platform.vectorY) > 1 ? "Walk" : "Idle";
     else if (!platform.isOnFloor) {
         name = "Jump";
         frame = JumpFrame(platform.vectorY);
@@ -941,10 +1100,55 @@ function GetCameraTarget() {
 function CheckFellOutOfLevel() {
     if (olly.y < runtime.layout.height + FALL_MARGIN)
         return;
-    olly.x = OLLY_SPAWN_X;
-    olly.y = OLLY_SPAWN_Y;
+    olly.x = spawnX;
+    olly.y = spawnY;
+    StopClimbing(0);
     olly.behaviors.Platform.setVector(0, 0);
     SnapCameraToOlly();
+}
+// Олли вошёл в портал (или, если портала нет, дошёл до правого края) —
+// следующий уровень. Если на уровне есть босс — только когда он побеждён.
+function CheckLevelExit() {
+    const open = !boss || bossPhase === "dead";
+    UpdatePortal(open);
+    if (!open)
+        return;
+    if (portal) {
+        const half = portal.width * PORTAL_INNER;
+        if (!OllyInBox(portal.x - half, portal.y - portal.height, portal.x + half, portal.y))
+            return;
+    }
+    else if (olly.x < runtime.layout.width - EXIT_MARGIN)
+        return;
+    const next = LEVELS.indexOf(runtime.layout.name) + 1;
+    if (next <= 0 || next >= LEVELS.length)
+        return;
+    leavingLevel = true;
+    runtime.goToLayout(LEVELS[next]);
+}
+// Разжигает портал, когда Олли рядом и выход открыт, и гасит, когда нет.
+function UpdatePortal(open) {
+    if (!portal)
+        return;
+    const awake = open && Math.abs(olly.x - portal.x) < PORTAL_WAKE;
+    portalTimeLeft = Math.max(0, portalTimeLeft - runtime.dt);
+    // Начатая вспышка или затухание доигрываются до конца.
+    if (portalTimeLeft > 0)
+        return;
+    if (portalPhase === "Opening")
+        SetPortalPhase("Open", 0);
+    else if (portalPhase === "Closing")
+        SetPortalPhase("Closed", 0);
+    else if (portalPhase === "Closed" && awake)
+        SetPortalPhase("Opening", PORTAL_OPENING_TIME);
+    else if (portalPhase === "Open" && !awake)
+        SetPortalPhase("Closing", PORTAL_CLOSING_TIME);
+}
+// Включает анимацию портала; имя фазы — имя анимации.
+function SetPortalPhase(phase, time) {
+    portalPhase = phase;
+    portalTimeLeft = time;
+    portal?.setAnimation(phase, "beginning");
 }
 // Утилиты
 // Ограничивает число отрезком.
