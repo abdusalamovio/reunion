@@ -1,0 +1,58 @@
+{
+	"name": "NurseryPlatformL",
+	"plugin-id": "Sprite",
+	"sid": 352434257156378,
+	"isGlobal": false,
+	"editorNewInstanceIsReplica": true,
+	"instanceVariables": [],
+	"behaviorTypes": [
+		{
+			"behaviorId": "jumpthru",
+			"name": "JumpThru",
+			"sid": 927100236040929
+		}
+	],
+	"effectTypes": [],
+	"animations": {
+		"items": [
+			{
+				"frames": [
+					{
+						"width": 202,
+						"height": 86,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 318929,
+						"collisionPoly": {
+							"points": [
+								0.07260726072607263,
+								0.2519379844961243,
+								0.8481848184818498,
+								0.2558139534883723,
+								0.7689768976897718,
+								0.7635658914728678,
+								0.10561056105610572,
+								0.7713178294573639
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					}
+				],
+				"sid": 871219129897815,
+				"name": "Default",
+				"isLooping": false,
+				"isPingPong": false,
+				"repeatCount": 1,
+				"repeatTo": 0,
+				"speed": 5
+			}
+		],
+		"subfolders": []
+	}
+}
