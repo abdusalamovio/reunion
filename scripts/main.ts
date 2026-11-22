@@ -191,11 +191,13 @@ const LEVELS: ReadonlyArray<string> = [
 ];
 
 // Выход в следующий уровень — стимпанк-портал в конце макета: Олли входит в
-// арку, и загружается следующий. Пока на уровне жив босс, портал заперт и
-// полупрозрачен. Нет портала — выход у правого края, как раньше.
+// арку, и загружается следующий. Портал разгорается, когда Олли рядом; пока на
+// уровне жив босс, заперт и не горит. Нет портала — выход у правого края, как раньше.
 const EXIT_MARGIN = 14;   // стена — сразу за краем: полхитбокса Олли 9 + запас
-const PORTAL_LOCKED_OPACITY = 0.35;
-const PORTAL_INNER = 0.3; // проём арки — доля ширины портала от центра в каждую сторону
+const PORTAL_WAKE = 150;           // с какого расстояния по X разгорается
+const PORTAL_OPENING_TIME = 5 / 12;
+const PORTAL_CLOSING_TIME = 4 / 12;
+const PORTAL_INNER = 0.17; // проём арки — доля ширины портала от центра в каждую сторону
 
 // Состояние
 
@@ -288,8 +290,12 @@ let coreBaseY = 0;
 // Уровень и арена
 let spawnX = 0;
 let spawnY = 0;
-let leavingLevel = false;
-let portal: InstanceType.Portal | null = null;     // goToLayout вызван, новый макет ещё не начался
+let leavingLevel = false;     // goToLayout вызван, новый макет ещё не начался
+let portal: InstanceType.Portal | null = null;
+
+type PortalPhase = "Closed" | "Opening" | "Open" | "Closing";
+let portalPhase: PortalPhase = "Closed";
+let portalTimeLeft = 0;
 
 // Запуск
 
@@ -349,6 +355,8 @@ function StartLevel(): void
 
 	leavingLevel = false;
 	portal = runtime.objects.Portal.getFirstInstance();
+	portalPhase = "Closed";
+	portalTimeLeft = 0;
 
 	CollectEnemyStates();
 	CollectBoss();
@@ -1587,8 +1595,7 @@ function CheckLevelExit(): void
 {
 	const open = !boss || bossPhase === "dead";
 
-	if (portal)
-		portal.opacity = open ? 1 : PORTAL_LOCKED_OPACITY;
+	UpdatePortal(open);
 
 	if (!open)
 		return;
@@ -1610,6 +1617,37 @@ function CheckLevelExit(): void
 
 	leavingLevel = true;
 	runtime.goToLayout(LEVELS[next]);
+}
+
+// Разжигает портал, когда Олли рядом и выход открыт, и гасит, когда нет.
+function UpdatePortal(open: boolean): void
+{
+	if (!portal)
+		return;
+
+	const awake = open && Math.abs(olly.x - portal.x) < PORTAL_WAKE;
+	portalTimeLeft = Math.max(0, portalTimeLeft - runtime.dt);
+
+	// Начатая вспышка или затухание доигрываются до конца.
+	if (portalTimeLeft > 0)
+		return;
+
+	if (portalPhase === "Opening")
+		SetPortalPhase("Open", 0);
+	else if (portalPhase === "Closing")
+		SetPortalPhase("Closed", 0);
+	else if (portalPhase === "Closed" && awake)
+		SetPortalPhase("Opening", PORTAL_OPENING_TIME);
+	else if (portalPhase === "Open" && !awake)
+		SetPortalPhase("Closing", PORTAL_CLOSING_TIME);
+}
+
+// Включает анимацию портала; имя фазы — имя анимации.
+function SetPortalPhase(phase: PortalPhase, time: number): void
+{
+	portalPhase = phase;
+	portalTimeLeft = time;
+	portal?.setAnimation(phase, "beginning");
 }
 
 // Утилиты
