@@ -334,7 +334,7 @@
 					"type": "Deco",
 					"properties": {
 						"initially-visible": true,
-						"initial-animation": "Floor4",
+						"initial-animation": "Floor2",
 						"initial-frame": 0,
 						"enable-collisions": false,
 						"live-preview": false
