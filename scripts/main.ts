@@ -7,6 +7,8 @@ const GAME_LAYER = "Игра";
 
 const KEY_LEFT = "KeyA";
 const KEY_RIGHT = "KeyD";
+const KEY_UP = "KeyW";      // по лестнице вверх
+const KEY_DOWN = "KeyS";    // по лестнице вниз
 const KEY_JUMP = "Space";
 const MOUSE_LEFT_BUTTON = 0;
 
@@ -15,6 +17,8 @@ const MOUSE_LEFT_BUTTON = 0;
 const CAMERA_SMOOTHING = 7;
 const CAMERA_LOOK_AHEAD = 0.22;
 const CAMERA_HEIGHT_BIAS = 0.12;
+// Наименьшее увеличение. Этажи второй локации ниже кадра (макет 170–203 px, а
+// камера видит 240), их StartLevel увеличивает так, чтобы этаж занял кадр.
 const CAMERA_ZOOM = 2;
 
 
@@ -168,16 +172,22 @@ const CORE_BOB_SPEED = 3;
 const SPRING_LAUNCH = 575;
 const SPRING_TOLERANCE = 3;
 
+// Лестницы: W — вверх, S — вниз, прыжок — спрыгнуть.
+
+const LADDER_SPEED = 80;
+const LADDER_HOP = 190;       // подскок на верху, чтобы встать на край опоры
+const LADDER_TOP_REACH = 4;   // насколько ступни могут быть выше лестницы
+
 // Точка возрождения: там, где Олли стоит на макете при старте уровня.
 
 const FALL_MARGIN = 80;
 
-// Уровни по порядку: у каждого свой макет, переход — у правого края. Имена —
-// как у макетов. Пока собрана только детская: мастерские и двор ждут
-// дизайна. Новые макеты дописывай сюда (и в LEVELS в
-// .claude/design/build_locations.py).
+// Уровни по порядку: у каждого свой макет, имена — как у макетов. Собраны
+// детская и старая мастерская; новая мастерская и двор ждут дизайна.
+// Новые макеты дописывай сюда.
 const LEVELS: ReadonlyArray<string> = [
 	"Детская 1", "Детская 2", "Детская 3",
+	"Старая мастерская 1", "Старая мастерская 2", "Старая мастерская 3",
 ];
 
 // Выход в следующий уровень — стимпанк-портал в конце макета: Олли входит в
@@ -194,6 +204,9 @@ let runtime!: IRuntime;
 let olly!: InstanceType.Olly;
 
 const heldKeys = new Set<string>();
+
+let climbing = false;
+let ollyGravity = 0;   // тяжесть Olly с макета: на лестнице она выключается
 
 let facing: 1 | -1 = 1;
 
@@ -340,7 +353,11 @@ function StartLevel(): void
 	CollectEnemyStates();
 	CollectBoss();
 
-	runtime.layout.scale = CAMERA_ZOOM;
+	ollyGravity = olly.behaviors.Platform.gravity;
+	climbing = false;
+
+	const viewportHeight = runtime.getViewportSize()[1];
+	runtime.layout.scale = Math.max(CAMERA_ZOOM, viewportHeight / runtime.layout.height);
 	SnapCameraToOlly();
 }
 
@@ -413,6 +430,7 @@ function Tick(): void
 	const dt = runtime.dt;
 
 	UpdateMovement();
+	UpdateLadders();
 	UpdateSprings();
 	UpdateFacing();
 	UpdateSwing(dt);
@@ -454,6 +472,78 @@ function UpdateFacing(): void
 		facing = 1;
 	else if (vectorX < -1)
 		facing = -1;
+}
+
+// Лестницы
+
+// W у лестницы — Олли лезет вверх, S — вниз. Пока лезет, тяжести нет.
+function UpdateLadders(): void
+{
+	const platform = olly.behaviors.Platform;
+	const up = heldKeys.has(KEY_UP);
+	const down = heldKeys.has(KEY_DOWN);
+	const ladder = LadderAtOlly();
+
+	if (!ladder)
+	{
+		// Долез до верха — подскок, чтобы шагнуть на опору рядом.
+		if (climbing)
+			StopClimbing(up ? -LADDER_HOP : 0);
+
+		return;
+	}
+
+	if (climbing && heldKeys.has(KEY_JUMP))
+	{
+		StopClimbing(-LADDER_HOP);
+		return;
+	}
+
+	// На полу S не хватается за лестницу: лезть вниз некуда.
+	if (!climbing && (up || (down && !platform.isOnFloor)) && !heldKeys.has(KEY_JUMP))
+	{
+		climbing = true;
+		platform.gravity = 0;
+	}
+
+	if (!climbing)
+		return;
+
+	const direction = (down ? 1 : 0) - (up ? 1 : 0);
+
+	// Спустился на пол — дальше идёт пешком.
+	if (direction > 0 && platform.isOnFloor)
+	{
+		StopClimbing(0);
+		return;
+	}
+
+	platform.setVector(platform.vectorX, direction * LADDER_SPEED);
+}
+
+// Отпускает лестницу: тяжесть возвращается, вертикальная скорость — vectorY.
+function StopClimbing(vectorY: number): void
+{
+	const platform = olly.behaviors.Platform;
+
+	climbing = false;
+	platform.gravity = ollyGravity;
+	platform.setVector(platform.vectorX, vectorY);
+}
+
+// Лестница, у которой стоит Олли. Опора лестницы — центр.
+function LadderAtOlly(): IWorldInstance | null
+{
+	for (const ladder of runtime.objects.Ladder.instances())
+	{
+		const top = ladder.y - ladder.height / 2 - LADDER_TOP_REACH;
+		const bottom = ladder.y + ladder.height / 2 + OLLY_HITBOX_HEIGHT / 2;
+
+		if (Math.abs(olly.x - ladder.x) <= ladder.width / 2 && olly.y >= top && olly.y <= bottom)
+			return ladder;
+	}
+
+	return null;
 }
 
 // Пружины
@@ -871,21 +961,47 @@ function FloorBelow(x: number, y: number): number
 	return support ? support.y : runtime.layout.height;
 }
 
-// Ближайшая опора (Ground или Shelf) под точкой: её верх не выше y.
-function SupportBelow(x: number, y: number): IWorldInstance | null
+// Ближайшая опора под точкой: её верх не выше y. Ищет по полу (Ground, Shelf)
+// и по платформам и тумбам макетов.
+function SupportBelow(x: number, y: number): SupportBox | null
 {
-	const supports: ReadonlyArray<IObjectType<IWorldInstance>> =
-		[runtime.objects.Ground, runtime.objects.Shelf];
-	let best: IWorldInstance | null = null;
+	const objects = runtime.objects;
 
-	// У Ground и Shelf точка привязки — левый верхний угол.
-	for (const objectType of supports)
+	// Доля кадра над верхней гранью рамки столкновений: у первых платформ над
+	// картинкой прозрачный запас, у остальных рамка — весь кадр.
+	const supports: ReadonlyArray<[IObjectType<IWorldInstance>, number]> = [
+		[objects.NurseryPlatformM, 0.25], [objects.NurseryPlatformS, 0.32],
+		[objects.NurseryPlatformL, 0.25], [objects.WorkshopPlatformM, 0], [objects.WorkshopPlatformL, 0],
+		[objects.WorkshopPlatformGear, 0], [objects.WorkshopPlatformS, 0],
+		[objects.NurseryPedestal, 0.07], [objects.WorkshopPedestal, 0], [objects.WorkshopBracket, 0],
+		[objects.NurseryColumn, 0.05], [objects.WorkshopColumn, 0],
+	];
+	let best: SupportBox | null = null;
+
+	const consider = (left: number, top: number, width: number): void =>
+	{
+		if (x >= left && x <= left + width && top >= y && (!best || top < best.y))
+			best = { x: left, y: top, width };
+	};
+
+	// У Ground и Shelf точка привязки — левый верхний угол, у остальных — центр.
+	for (const objectType of [objects.Ground, objects.Shelf])
 		for (const support of objectType.instances())
-			if (x >= support.x && x <= support.x + support.width && support.y >= y
-				&& (!best || support.y < best.y))
-				best = support;
+			consider(support.x, support.y, support.width);
+
+	for (const [objectType, topShare] of supports)
+		for (const support of objectType.instances())
+			consider(support.x - support.width / 2,
+				support.y + support.height * (topShare - 0.5), support.width);
 
 	return best;
+}
+
+interface SupportBox
+{
+	readonly x: number;
+	readonly y: number;
+	readonly width: number;
 }
 
 // Касание врага ранит Олли.
@@ -1364,6 +1480,8 @@ function UpdateAnimation(dt: number): void
 
 	if (oneShot)
 		name = oneShot.name;
+	else if (climbing)
+		name = Math.abs(platform.vectorY) > 1 ? "Walk" : "Idle";
 	else if (!platform.isOnFloor)
 	{
 		name = "Jump";
@@ -1457,6 +1575,7 @@ function CheckFellOutOfLevel(): void
 
 	olly.x = spawnX;
 	olly.y = spawnY;
+	StopClimbing(0);
 	olly.behaviors.Platform.setVector(0, 0);
 
 	SnapCameraToOlly();
