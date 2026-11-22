@@ -9,28 +9,28 @@
 		{
 			"type": "plugin",
 			"id": "Sprite",
-			"name": "Sprite",
+			"name": "Спрайт",
 			"author": "Scirra",
 			"bundled": false
 		},
 		{
 			"type": "behavior",
 			"id": "Platform",
-			"name": "Platform",
-			"author": "Scirra",
-			"bundled": false
-		},
-		{
-			"type": "behavior",
-			"id": "solid",
-			"name": "Solid",
+			"name": "Платформер",
 			"author": "Scirra",
 			"bundled": false
 		},
 		{
 			"type": "behavior",
 			"id": "jumpthru",
-			"name": "Jump-thru",
+			"name": "Сквозная платформа",
+			"author": "Scirra",
+			"bundled": false
+		},
+		{
+			"type": "behavior",
+			"id": "solid",
+			"name": "Твёрдый",
 			"author": "Scirra",
 			"bundled": false
 		}
@@ -88,7 +88,10 @@
 		"items": [
 			"Детская 1",
 			"Детская 2",
-			"Детская 3"
+			"Детская 3",
+			"Старая мастерская 1",
+			"Старая мастерская 2",
+			"Старая мастерская 3"
 		],
 		"subfolders": []
 	},
