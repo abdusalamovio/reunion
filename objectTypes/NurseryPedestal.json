@@ -1,0 +1,58 @@
+{
+	"name": "NurseryPedestal",
+	"plugin-id": "Sprite",
+	"sid": 825806638107079,
+	"isGlobal": false,
+	"editorNewInstanceIsReplica": true,
+	"instanceVariables": [],
+	"behaviorTypes": [
+		{
+			"behaviorId": "solid",
+			"name": "Solid",
+			"sid": 659324289521080
+		}
+	],
+	"effectTypes": [],
+	"animations": {
+		"items": [
+			{
+				"frames": [
+					{
+						"width": 87,
+						"height": 126,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 5562904,
+						"collisionPoly": {
+							"points": [
+								0.1133004926108374,
+								0.07369614512471652,
+								0.9047619047619049,
+								0.08163265306122452,
+								0.8325123152709362,
+								0.9126984126984132,
+								0.11330049261083741,
+								0.9081632653061231
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					}
+				],
+				"sid": 890037199387275,
+				"name": "Default",
+				"isLooping": false,
+				"isPingPong": false,
+				"repeatCount": 1,
+				"repeatTo": 0,
+				"speed": 5
+			}
+		],
+		"subfolders": []
+	}
+}

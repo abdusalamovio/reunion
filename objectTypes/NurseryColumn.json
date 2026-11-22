@@ -1,0 +1,58 @@
+{
+	"name": "NurseryColumn",
+	"plugin-id": "Sprite",
+	"sid": 319573244682506,
+	"isGlobal": false,
+	"editorNewInstanceIsReplica": true,
+	"instanceVariables": [],
+	"behaviorTypes": [
+		{
+			"behaviorId": "solid",
+			"name": "Solid",
+			"sid": 146777698333449
+		}
+	],
+	"effectTypes": [],
+	"animations": {
+		"items": [
+			{
+				"frames": [
+					{
+						"width": 87,
+						"height": 143,
+						"originX": 0.5,
+						"originY": 0.5,
+						"originalSource": "",
+						"exportFormat": "lossless",
+						"exportQuality": 0.8,
+						"fileType": "image/png",
+						"imageSpriteId": 844636,
+						"collisionPoly": {
+							"points": [
+								0.1877394636015324,
+								0.0477855477855478,
+								0.7509578544061298,
+								0.04778554778554778,
+								0.7049808429118766,
+								0.9895104895104894,
+								0.25095785440613005,
+								0.9860139860139858
+							]
+						},
+						"useCollisionPoly": true,
+						"duration": 1,
+						"tag": ""
+					}
+				],
+				"sid": 304983857282395,
+				"name": "Default",
+				"isLooping": false,
+				"isPingPong": false,
+				"repeatCount": 1,
+				"repeatTo": 0,
+				"speed": 5
+			}
+		],
+		"subfolders": []
+	}
+}
