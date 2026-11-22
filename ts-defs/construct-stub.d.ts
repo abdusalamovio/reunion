@@ -11,6 +11,7 @@ interface IPlatformBehaviorInstance
 	setVector(vectorX: number, vectorY: number): void;
 	vectorX: number;
 	vectorY: number;
+	gravity: number;
 	readonly isOnFloor: boolean;
 }
 
@@ -98,6 +99,27 @@ interface IProjectObjects
 	readonly Portal: IObjectType<InstanceType.Portal>;
 	readonly Shelf: IObjectType<InstanceType.Shelf>;
 	readonly Spring: IObjectType<InstanceType.Spring>;
+	readonly NurseryPlatformM: IObjectType<InstanceType.NurseryPlatformM>;
+	readonly NurseryPlatformS: IObjectType<InstanceType.NurseryPlatformS>;
+	readonly NurseryPlatformL: IObjectType<InstanceType.NurseryPlatformL>;
+	readonly NurseryFloor: IObjectType<InstanceType.NurseryFloor>;
+	readonly NurseryPedestal: IObjectType<InstanceType.NurseryPedestal>;
+	readonly NurseryColumn: IObjectType<InstanceType.NurseryColumn>;
+	readonly NurseryBackdrop3: IObjectType<InstanceType.NurseryBackdrop3>;
+	readonly NurseryBackdrop2: IObjectType<InstanceType.NurseryBackdrop2>;
+	readonly NurseryBackdrop1: IObjectType<InstanceType.NurseryBackdrop1>;
+	readonly WorkshopBackdrop1: IObjectType<InstanceType.WorkshopBackdrop1>;
+	readonly WorkshopFloor: IObjectType<InstanceType.WorkshopFloor>;
+	readonly Ladder: IObjectType<InstanceType.Ladder>;
+	readonly WorkshopPlatformM: IObjectType<InstanceType.WorkshopPlatformM>;
+	readonly WorkshopPlatformL: IObjectType<InstanceType.WorkshopPlatformL>;
+	readonly WorkshopPlatformGear: IObjectType<InstanceType.WorkshopPlatformGear>;
+	readonly WorkshopPlatformS: IObjectType<InstanceType.WorkshopPlatformS>;
+	readonly WorkshopPedestal: IObjectType<InstanceType.WorkshopPedestal>;
+	readonly WorkshopBracket: IObjectType<InstanceType.WorkshopBracket>;
+	readonly WorkshopColumn: IObjectType<InstanceType.WorkshopColumn>;
+	readonly WorkshopBackdrop2: IObjectType<InstanceType.WorkshopBackdrop2>;
+	readonly WorkshopBackdrop3: IObjectType<InstanceType.WorkshopBackdrop3>;
 }
 
 declare namespace InstanceType
@@ -126,4 +148,25 @@ declare namespace InstanceType
 	type Portal = ISpriteInstance;
 	type Shelf = ISpriteInstance;
 	type Spring = ISpriteInstance;
+	type NurseryPlatformM = ISpriteInstance;
+	type NurseryPlatformS = ISpriteInstance;
+	type NurseryPlatformL = ISpriteInstance;
+	type NurseryFloor = ISpriteInstance;
+	type NurseryPedestal = ISpriteInstance;
+	type NurseryColumn = ISpriteInstance;
+	type NurseryBackdrop3 = ISpriteInstance;
+	type NurseryBackdrop2 = ISpriteInstance;
+	type NurseryBackdrop1 = ISpriteInstance;
+	type WorkshopBackdrop1 = ISpriteInstance;
+	type WorkshopFloor = ISpriteInstance;
+	type Ladder = ISpriteInstance;
+	type WorkshopPlatformM = ISpriteInstance;
+	type WorkshopPlatformL = ISpriteInstance;
+	type WorkshopPlatformGear = ISpriteInstance;
+	type WorkshopPlatformS = ISpriteInstance;
+	type WorkshopPedestal = ISpriteInstance;
+	type WorkshopBracket = ISpriteInstance;
+	type WorkshopColumn = ISpriteInstance;
+	type WorkshopBackdrop2 = ISpriteInstance;
+	type WorkshopBackdrop3 = ISpriteInstance;
 }
